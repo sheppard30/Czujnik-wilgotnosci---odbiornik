@@ -11,14 +11,17 @@
 #define PREAMBLE 0b10101010
 #define FRAME_LENGTH 3
 
+extern volatile uint8_t debug[64];
+extern volatile uint8_t debugIndex;
+extern volatile uint8_t debugReady;
+extern volatile bool debugPrinted;
+
 class Receiver
 {
 public:
     Receiver();
     void init();
     void onTimerInterrupt();
-    volatile uint8_t preamble;
-    volatile uint8_t buffer[FRAME_LENGTH];
 
 private:
     enum State
@@ -31,6 +34,8 @@ private:
     volatile State state;
     volatile uint8_t bitIndex;
     volatile uint8_t manchesterPhase;
+    volatile uint8_t preamble;
+    volatile uint8_t buffer[FRAME_LENGTH];
 
     void read();
     void resetBuffer();

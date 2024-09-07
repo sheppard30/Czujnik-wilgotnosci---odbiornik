@@ -1,8 +1,15 @@
 #include "Receiver.h"
 
+// Globalne zmienne debugowania
+volatile uint8_t debug[64];      // Definicja globalnej tablicy debug
+volatile uint8_t debugIndex = 0; // Indeks do bufora
+volatile uint8_t debugReady = 0; // Flaga sygnalizująca gotowość bufora
+volatile bool debugPrinted = false;
+
 Receiver::Receiver()
 {
     previousBit = 0;
+    preamble = 0;
     state = State::WAITING_FOR_PREAMBLE;
     bitIndex = 0;
     manchesterPhase = 0;
@@ -78,23 +85,18 @@ void Receiver::read()
 {
     uint8_t currentBit = (PIND & (1 << DATA_PIN)) ? 1 : 0;
 
-    if (state == State::WAITING_FOR_PREAMBLE && preambleDetected())
+    if (state == State::WAITING_FOR_PREAMBLE)
     {
-        Uart::print('p');
-        state = State::READING_DATA;
+        if (preambleDetected())
+        {
+            state = State::READING_DATA;
+        }
         return;
     }
 
     if (state == State::READING_DATA)
     {
-        if (currentBit)
-        {
-            Uart::print('1');
-        }
-        else
-        {
-            Uart::print('0');
-        }
+
         // Dekodowanie danych po wykryciu preambuły
         if (manchesterPhase == 0)
         {
@@ -103,6 +105,22 @@ void Receiver::read()
         }
         else
         {
+            if (!debugReady)
+            {
+                // Zapisujemy dane do debug
+                if (debugIndex < 64)
+                {
+                    debug[debugIndex] = currentBit; // Zapisanie danych do debug (np. bieżącego bitu)
+                    debugIndex++;
+                }
+
+                // Jeśli bufor został wypełniony, ustawiamy flagę
+                if (debugIndex >= 64)
+                {
+                    debugReady = 1; // Bufor jest gotowy do wysłania
+                    debugIndex = 0; // Resetujemy indeks
+                }
+            }
             // Druga połowa bitu Manchester - dekodujemy bit logiczny
             if (previousBit == 0 && currentBit == 1)
             {
