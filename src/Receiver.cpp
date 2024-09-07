@@ -60,18 +60,12 @@ bool Receiver::preambleDetected()
     if (previousBit == 0 && currentBit == 1)
     {
         // Przejście z LOW do HIGH, co oznacza logiczną 1 w kodzie Manchester
-        if (state == State::WAITING_FOR_PREAMBLE)
-        {
-            preamble = ((preamble << 1) | 1);
-        }
+        preamble = ((preamble << 1) | 1);
     }
     else if (previousBit == 1 && currentBit == 0)
     {
         // Przejście z HIGH do LOW, co oznacza logiczne 0 w kodzie Manchester
-        if (state == State::WAITING_FOR_PREAMBLE)
-        {
-            preamble = ((preamble << 1));
-        }
+        preamble = ((preamble << 1));
     }
 
     // Zapisz aktualny stan jako poprzedni na następną iterację
@@ -86,6 +80,7 @@ void Receiver::read()
 
     if (state == State::WAITING_FOR_PREAMBLE && preambleDetected())
     {
+        Uart::print('p');
         state = State::READING_DATA;
         return;
     }

@@ -17,8 +17,8 @@ public:
     Receiver();
     void init();
     void onTimerInterrupt();
-    uint8_t preamble;
-    uint8_t buffer[FRAME_LENGTH];
+    volatile uint8_t preamble;
+    volatile uint8_t buffer[FRAME_LENGTH];
 
 private:
     enum State
@@ -27,11 +27,10 @@ private:
         READING_DATA
     };
 
-    uint8_t previousBit;
-    State state;
-
-    uint8_t bitIndex;
-    uint8_t manchesterPhase;
+    volatile uint8_t previousBit;
+    volatile State state;
+    volatile uint8_t bitIndex;
+    volatile uint8_t manchesterPhase;
 
     void read();
     void resetBuffer();
