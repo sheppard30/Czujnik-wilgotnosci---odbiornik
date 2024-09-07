@@ -33,3 +33,12 @@ void Uart::print(uint8_t data)
     // Wyślij dane
     UDR = data;
 }
+
+void Uart::print(const uint8_t *data, uint8_t length)
+{
+    // Iterujemy przez każdy element w tablicy danych
+    for (uint8_t i = 0; i < length; ++i)
+    {
+        print(data[i]); // Wywołanie istniejącej metody `print(uint8_t data)` dla każdego elementu
+    }
+}
