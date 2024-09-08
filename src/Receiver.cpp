@@ -51,6 +51,10 @@ void Receiver::init()
 
 void Receiver::resetData()
 {
+    for (int index = 0; index < FRAME_LENGTH; index++)
+    {
+        data[index] = 0; // Ustaw każdy element tablicy na 0
+    }
 }
 
 void Receiver::fillBuffer(uint8_t bit)
@@ -74,9 +78,6 @@ void Receiver::fillBuffer(uint8_t bit)
     if (bitIndex >= (FRAME_LENGTH - 1) * 8)
     {
         bitIndex = 0; // Zresetuj bitIndex, jeśli osiągnie koniec bufora
-        debugValue(data[2], 1);
-        resetData();
-
         state = State::NONE;
     }
 }
@@ -89,6 +90,7 @@ void Receiver::read()
     {
         if (state == State::NONE)
         {
+            resetData();
             state = State::READING_PREAMBLE;
             t = 0;
         }
@@ -98,13 +100,12 @@ void Receiver::read()
             if (state == State::READING_PREAMBLE)
             {
                 data[0] = (data[0] << 1) | 1;
-                t = 0;
             }
             else if (state == State::READING_DATA)
             {
-                debugValue('1');
                 fillBuffer(1);
             }
+            t = 0;
         }
     }
     else if (previousBit == 1 && currentBit == 0)
@@ -114,13 +115,12 @@ void Receiver::read()
             if (state == State::READING_PREAMBLE)
             {
                 data[0] = (data[0] << 1);
-                t = 0;
             }
             else if (state == State::READING_DATA)
             {
-                debugValue('0');
                 fillBuffer(0);
             }
+            t = 0;
         }
     }
 
@@ -133,8 +133,7 @@ void Receiver::read()
             state = State::READING_DATA;
         }
     }
-
-    if (state == State::READING_DATA)
+    else if (state == State::READING_DATA)
     {
         t++;
     }
