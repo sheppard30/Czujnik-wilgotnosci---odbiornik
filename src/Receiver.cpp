@@ -6,13 +6,27 @@ volatile uint8_t debugIndex = 0; // Indeks do bufora
 volatile uint8_t debugReady = 0; // Flaga sygnalizująca gotowość bufora
 volatile bool debugPrinted = false;
 
+void debugValue(uint8_t value)
+{
+    if (!debugReady)
+    {
+        debug[debugIndex] = value;
+        debugIndex++;
+    }
+
+    if (debugIndex >= 64)
+    {
+        debugReady = true;
+    }
+}
+
 Receiver::Receiver()
 {
     previousBit = 0;
-    preamble = 0;
-    state = State::WAITING_FOR_PREAMBLE;
+    state = State::NONE;
     bitIndex = 0;
-    manchesterPhase = 0;
+    phase = 0;
+    t = 0;
 
     resetBuffer();
 }
@@ -24,12 +38,6 @@ void Receiver::init()
 
 void Receiver::resetBuffer()
 {
-    for (uint8_t index = 0; index < FRAME_LENGTH; ++index)
-    {
-        buffer[index] = 0; // Ustawiamy każdy element tablicy na 0
-    }
-
-    bitIndex = 0;
 }
 
 void Receiver::fillBuffer(uint8_t bit)
@@ -56,87 +64,55 @@ void Receiver::fillBuffer(uint8_t bit)
 
         resetBuffer();
 
-        state = State::WAITING_FOR_PREAMBLE;
+        state = State::READING_PREAMBLE;
     }
 }
 
 bool Receiver::preambleDetected()
 {
-    uint8_t currentBit = (PIND & (1 << DATA_PIN)) ? 1 : 0;
-
-    if (previousBit == 0 && currentBit == 1)
-    {
-        // Przejście z LOW do HIGH, co oznacza logiczną 1 w kodzie Manchester
-        preamble = ((preamble << 1) | 1);
-    }
-    else if (previousBit == 1 && currentBit == 0)
-    {
-        // Przejście z HIGH do LOW, co oznacza logiczne 0 w kodzie Manchester
-        preamble = ((preamble << 1));
-    }
-
-    // Zapisz aktualny stan jako poprzedni na następną iterację
-    previousBit = currentBit;
-
-    return (preamble == PREAMBLE);
 }
 
 void Receiver::read()
 {
     uint8_t currentBit = (PIND & (1 << DATA_PIN)) ? 1 : 0;
 
-    if (state == State::WAITING_FOR_PREAMBLE)
+    if (previousBit == 0 && currentBit == 1)
     {
-        if (preambleDetected())
+        if (state == State::NONE)
         {
-            state = State::READING_DATA;
+            state = State::READING_PREAMBLE;
+            t = 0;
         }
-        return;
+
+        if (state == State::READING_PREAMBLE)
+        {
+            if (t >= 20 || t == 0)
+            {
+                debugValue('1');
+                PORTD |= (1 << PD5);
+                t = 0;
+            }
+        }
+    }
+    else if (previousBit == 1 && currentBit == 0)
+    {
+        if (state == State::READING_PREAMBLE)
+        {
+            if (t >= 20)
+            {
+                debugValue('0');
+                PORTD &= ~(1 << PD5);
+                t = 0;
+            }
+        }
     }
 
-    if (state == State::READING_DATA)
+    if (state == State::READING_PREAMBLE)
     {
-
-        // Dekodowanie danych po wykryciu preambuły
-        if (manchesterPhase == 0)
-        {
-            // Pierwsza połowa bitu Manchester
-            manchesterPhase = 1;
-        }
-        else
-        {
-            if (!debugReady)
-            {
-                // Zapisujemy dane do debug
-                if (debugIndex < 64)
-                {
-                    debug[debugIndex] = currentBit; // Zapisanie danych do debug (np. bieżącego bitu)
-                    debugIndex++;
-                }
-
-                // Jeśli bufor został wypełniony, ustawiamy flagę
-                if (debugIndex >= 64)
-                {
-                    debugReady = 1; // Bufor jest gotowy do wysłania
-                    debugIndex = 0; // Resetujemy indeks
-                }
-            }
-            // Druga połowa bitu Manchester - dekodujemy bit logiczny
-            if (previousBit == 0 && currentBit == 1)
-            {
-                fillBuffer(1); // Zapis do bufora
-            }
-            else if (previousBit == 1 && currentBit == 0)
-            {
-                fillBuffer(0); // Zapis do bufora
-            }
-
-            // Zresetuj fazę Manchester
-            manchesterPhase = 0;
-        }
-
-        previousBit = currentBit;
+        t++;
     }
+
+    previousBit = currentBit;
 }
 
 void Receiver::onTimerInterrupt()

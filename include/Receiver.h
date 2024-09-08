@@ -10,6 +10,7 @@
 
 #define PREAMBLE 0b10101010
 #define FRAME_LENGTH 3
+#define T 0.5
 
 extern volatile uint8_t debug[64];
 extern volatile uint8_t debugIndex;
@@ -26,15 +27,17 @@ public:
 private:
     enum State
     {
-        WAITING_FOR_PREAMBLE,
+        NONE,
+        READING_PREAMBLE,
         READING_DATA
     };
 
     volatile uint8_t previousBit;
-    volatile State state;
     volatile uint8_t bitIndex;
-    volatile uint8_t manchesterPhase;
-    volatile uint8_t preamble;
+    volatile uint8_t t;
+    volatile uint8_t phase;
+    volatile State state;
+
     volatile uint8_t buffer[FRAME_LENGTH];
 
     void read();
