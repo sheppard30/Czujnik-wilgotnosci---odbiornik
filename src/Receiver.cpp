@@ -1,38 +1,5 @@
 #include "Receiver.h"
-
-// Globalne zmienne debugowania
-volatile uint8_t debug[64];      // Definicja globalnej tablicy debug
-volatile uint8_t debugIndex = 0; // Indeks do bufora
-volatile uint8_t debugReady = 0; // Flaga sygnalizująca gotowość bufora
-volatile bool debugPrinted = false;
-
-void debugValue(uint8_t value)
-{
-    if (!debugReady)
-    {
-        debug[debugIndex] = value;
-        debugIndex++;
-    }
-
-    if (debugIndex >= 64)
-    {
-        debugReady = true;
-    }
-}
-
-void debugValue(uint8_t value, uint8_t length)
-{
-    if (!debugReady)
-    {
-        debug[debugIndex] = value;
-        debugIndex++;
-    }
-
-    if (debugIndex >= length)
-    {
-        debugReady = true;
-    }
-}
+#include "Debug.h"
 
 Receiver::Receiver()
 {
@@ -40,6 +7,7 @@ Receiver::Receiver()
     state = State::NONE;
     bitIndex = 0;
     t = 0;
+    dataAvailable = false;
 
     resetData();
 }
@@ -51,6 +19,8 @@ void Receiver::init()
 
 void Receiver::resetData()
 {
+    dataAvailable = false;
+
     for (int index = 0; index < FRAME_LENGTH; index++)
     {
         data[index] = 0; // Ustaw każdy element tablicy na 0
@@ -79,6 +49,7 @@ void Receiver::fillBuffer(uint8_t bit)
     {
         bitIndex = 0; // Zresetuj bitIndex, jeśli osiągnie koniec bufora
         state = State::NONE;
+        dataAvailable = true;
     }
 }
 
@@ -139,6 +110,22 @@ void Receiver::read()
     }
 
     previousBit = currentBit;
+}
+
+uint8_t Receiver::getIdentifier()
+{
+    return data[1];
+}
+
+uint16_t Receiver::getData()
+{
+    // Łączy data[2] i data[3] w jedną 16-bitową liczbę
+    return (static_cast<uint16_t>(data[2]) << 8) | data[3];
+}
+
+bool Receiver::isDataAvailable()
+{
+    return dataAvailable;
 }
 
 void Receiver::onTimerInterrupt()

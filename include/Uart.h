@@ -12,9 +12,11 @@ class Uart
 public:
     Uart();
     static void init(unsigned int ubrr);
-    static void print(const char *str);
-    static void print(uint8_t data);
-    static void print(const uint8_t *data, uint8_t length);
+    static void print(uint16_t value);                      // Deklaracja dla uint16_t
+    static void print(const char *str);                     // Deklaracja dla stringa
+    static void print(uint8_t data);                        // Deklaracja dla uint8_t
+    static void print(const uint8_t *data, uint8_t length); // Deklaracja dla tablicy bajtów
+    static void print(char data);
 };
 
 #endif

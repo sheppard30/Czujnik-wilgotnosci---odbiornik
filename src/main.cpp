@@ -4,6 +4,8 @@
 
 #include "Timer.h"
 #include "Receiver.h"
+#include "Debug.h"
+#include "Uart.h"
 
 Receiver receiver;
 
@@ -14,11 +16,6 @@ ISR(TIMER0_COMPA_vect)
 
 int main()
 {
-    for (uint8_t i = 0; i < 64; i++)
-    {
-        debug[i] = 'p'; // Reset tablicy po wysłaniu
-    }
-
     Uart::init(MYUBRR);
     Timer::init();
 
@@ -26,11 +23,16 @@ int main()
 
     while (1)
     {
-        // Sprawdzenie, czy bufor debug jest gotowy do wysłania
+        if (receiver.isDataAvailable())
+        {
+            Uart::print(receiver.getData());
+            receiver.resetData();
+        }
+
         if (debugReady && !debugPrinted)
         {
-            debugPrinted = true;                     // Reset flagi
-            Uart::print((const uint8_t *)debug, 64); // Wyświetlenie zawartości bufora
+            debugPrinted = true; // Reset flagi
+            // Uart::print((const uint8_t *)debugBuffer, 64);
         }
     }
 }

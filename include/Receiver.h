@@ -6,23 +6,21 @@
 #define DATA_PIN PD6
 
 #include <avr/io.h>
-#include "Uart.h"
 
 #define PREAMBLE 0b10101010
 #define FRAME_LENGTH 4
 #define T 0.5
-
-extern volatile uint8_t debug[64];
-extern volatile uint8_t debugIndex;
-extern volatile uint8_t debugReady;
-extern volatile bool debugPrinted;
 
 class Receiver
 {
 public:
     Receiver();
     void init();
+    void resetData();
     void onTimerInterrupt();
+    uint8_t getIdentifier();
+    uint16_t getData();
+    bool isDataAvailable();
 
 private:
     enum State
@@ -37,9 +35,9 @@ private:
     volatile uint8_t t;
     volatile uint8_t data[FRAME_LENGTH];
     volatile State state;
+    volatile bool dataAvailable;
 
     void read();
-    void resetData();
     void fillBuffer(uint8_t bit);
 };
 
