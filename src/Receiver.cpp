@@ -86,7 +86,8 @@ void Receiver::read()
 
         if (state == State::READING_PREAMBLE)
         {
-            if (t >= 20 || t == 0)
+
+            if (t >= 10 || t == 0)
             {
                 debugValue('1');
                 PORTD |= (1 << PD5);
@@ -98,7 +99,8 @@ void Receiver::read()
     {
         if (state == State::READING_PREAMBLE)
         {
-            if (t >= 20)
+
+            if (t >= 10)
             {
                 debugValue('0');
                 PORTD &= ~(1 << PD5);
