@@ -9,7 +9,7 @@
 #include "Uart.h"
 
 #define PREAMBLE 0b10101010
-#define FRAME_LENGTH 3
+#define FRAME_LENGTH 4
 #define T 0.5
 
 extern volatile uint8_t debug[64];
@@ -35,14 +35,11 @@ private:
     volatile uint8_t previousBit;
     volatile uint8_t bitIndex;
     volatile uint8_t t;
-    volatile uint8_t phase;
+    volatile uint8_t data[FRAME_LENGTH];
     volatile State state;
 
-    volatile uint8_t buffer[FRAME_LENGTH];
-
     void read();
-    void resetBuffer();
-    bool preambleDetected();
+    void resetData();
     void fillBuffer(uint8_t bit);
 };
 

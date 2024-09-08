@@ -20,15 +20,28 @@ void debugValue(uint8_t value)
     }
 }
 
+void debugValue(uint8_t value, uint8_t length)
+{
+    if (!debugReady)
+    {
+        debug[debugIndex] = value;
+        debugIndex++;
+    }
+
+    if (debugIndex >= length)
+    {
+        debugReady = true;
+    }
+}
+
 Receiver::Receiver()
 {
     previousBit = 0;
     state = State::NONE;
     bitIndex = 0;
-    phase = 0;
     t = 0;
 
-    resetBuffer();
+    resetData();
 }
 
 void Receiver::init()
@@ -36,40 +49,36 @@ void Receiver::init()
     DATA_DDR &= ~(1 << DATA_PIN);
 }
 
-void Receiver::resetBuffer()
+void Receiver::resetData()
 {
 }
 
 void Receiver::fillBuffer(uint8_t bit)
 {
     // Obliczamy, w którym bajcie oraz na której pozycji w tym bajcie wstawić bit
-    uint8_t byteIndex = bitIndex / 8;         // Indeks bajtu w tablicy buffer
+    uint8_t byteIndex = (bitIndex / 8) + 1;   // Indeks bajtu w tablicy buffer
     uint8_t bitPosition = 7 - (bitIndex % 8); // Pozycja bitu w danym bajcie
 
     // Wstawiamy bit na odpowiednie miejsce w bajcie
     if (bit == 1)
     {
-        buffer[byteIndex] |= (1 << bitPosition); // Ustawiamy bit na 1
+        data[byteIndex] |= (1 << bitPosition); // Ustawiamy bit na 1
     }
     else
     {
-        buffer[byteIndex] &= ~(1 << bitPosition); // Resetujemy bit na 0
+        data[byteIndex] &= ~(1 << bitPosition); // Resetujemy bit na 0
     }
 
     bitIndex++;
 
-    if (bitIndex >= FRAME_LENGTH * 8)
+    if (bitIndex >= (FRAME_LENGTH - 1) * 8)
     {
         bitIndex = 0; // Zresetuj bitIndex, jeśli osiągnie koniec bufora
+        debugValue(data[2], 1);
+        resetData();
 
-        resetBuffer();
-
-        state = State::READING_PREAMBLE;
+        state = State::NONE;
     }
-}
-
-bool Receiver::preambleDetected()
-{
 }
 
 void Receiver::read()
@@ -84,32 +93,48 @@ void Receiver::read()
             t = 0;
         }
 
-        if (state == State::READING_PREAMBLE)
+        if (t >= 10 || t == 0)
         {
-
-            if (t >= 10 || t == 0)
+            if (state == State::READING_PREAMBLE)
+            {
+                data[0] = (data[0] << 1) | 1;
+                t = 0;
+            }
+            else if (state == State::READING_DATA)
             {
                 debugValue('1');
-                PORTD |= (1 << PD5);
-                t = 0;
+                fillBuffer(1);
             }
         }
     }
     else if (previousBit == 1 && currentBit == 0)
     {
-        if (state == State::READING_PREAMBLE)
+        if (t >= 10)
         {
-
-            if (t >= 10)
+            if (state == State::READING_PREAMBLE)
+            {
+                data[0] = (data[0] << 1);
+                t = 0;
+            }
+            else if (state == State::READING_DATA)
             {
                 debugValue('0');
-                PORTD &= ~(1 << PD5);
-                t = 0;
+                fillBuffer(0);
             }
         }
     }
 
     if (state == State::READING_PREAMBLE)
+    {
+        t++;
+
+        if (data[0] == PREAMBLE)
+        {
+            state = State::READING_DATA;
+        }
+    }
+
+    if (state == State::READING_DATA)
     {
         t++;
     }
