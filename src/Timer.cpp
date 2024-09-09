@@ -8,7 +8,7 @@ void Timer::init()
     // Ustawienie preskalera na 64
     TCCR0B = (1 << CS01) | (1 << CS00); // Preskaler 64
 
-    // Ustawienie wartości porównawczej (OCR0A) na 61, aby uzyskać nieco poniżej 0,5 ms
+    // Ustawienie wartości porównawczej (OCR0A) na 24, aby uzyskać nieco 0,2 ms
     OCR0A = 24;
 
     // Włączenie przerwań od porównania (przerwanie dla OCR0A)

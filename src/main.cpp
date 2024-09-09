@@ -4,6 +4,7 @@
 
 #include "Timer.h"
 #include "Receiver.h"
+#include "Lcd.h"
 #include "Debug.h"
 #include "Uart.h"
 
@@ -18,14 +19,19 @@ int main()
 {
     Uart::init(MYUBRR);
     Timer::init();
+    Lcd lcd;
 
-    DDRD |= (1 << PD5);
+    lcd.setCursor(0, 0);
+    lcd.print("Wartosc:");
 
     while (1)
     {
         if (receiver.isDataAvailable())
         {
-            Uart::print(receiver.getData());
+            // lcd.setCursor(0, 0);                 // Ustawienie kursora na 1. linii
+            // lcd.print("Wartosc:");               // Wyświetlenie tekstu
+            // lcd.setCursor(0, 1);                 // Ustawienie kursora na 2. linii
+            // lcd.printNumber(receiver.getData()); // Wyświetlenie liczby
             receiver.resetData();
         }
 
