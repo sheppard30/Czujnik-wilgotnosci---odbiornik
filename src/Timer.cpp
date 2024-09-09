@@ -12,7 +12,7 @@ void Timer::init()
     OCR0A = 24;
 
     // Włączenie przerwań od porównania (przerwanie dla OCR0A)
-    TIMSK = (1 << OCIE0A);
+    TIMSK0 = (1 << OCIE0A); // Zmieniono TIMSK na TIMSK0, specyficzny dla ATmega328P
 
     // Włączenie globalnych przerwań
     sei();

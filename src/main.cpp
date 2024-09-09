@@ -1,14 +1,17 @@
-#include "Uart.h"
-
 #include <util/delay.h>
+#include <avr/pgmspace.h>
 
 #include "Timer.h"
 #include "Receiver.h"
-#include "Lcd.h"
-#include "Debug.h"
-#include "Uart.h"
+// #include "Debug.h"
+#include "StringUtils.h"
+
+#include <lcd.h>
+#include <lcd.c>
 
 Receiver receiver;
+
+#include <avr/interrupt.h>
 
 ISR(TIMER0_COMPA_vect)
 {
@@ -17,28 +20,27 @@ ISR(TIMER0_COMPA_vect)
 
 int main()
 {
-    Uart::init(MYUBRR);
+    // Uart::init(MYUBRR);
     Timer::init();
-    Lcd lcd;
 
-    lcd.setCursor(0, 0);
-    lcd.print("Wartosc:");
+    lcd_init(LCD_DISP_ON);
+    char huminityString[4];
 
     while (1)
     {
         if (receiver.isDataAvailable())
         {
-            // lcd.setCursor(0, 0);                 // Ustawienie kursora na 1. linii
-            // lcd.print("Wartosc:");               // Wyświetlenie tekstu
-            // lcd.setCursor(0, 1);                 // Ustawienie kursora na 2. linii
-            // lcd.printNumber(receiver.getData()); // Wyświetlenie liczby
-            receiver.resetData();
-        }
+            char sensorLabel[] = "Czujnik: ";
+            char huminityLabel[] = "Wilgotnosc: ";
 
-        if (debugReady && !debugPrinted)
-        {
-            debugPrinted = true; // Reset flagi
-            // Uart::print((const uint8_t *)debugBuffer, 64);
+            intToString(receiver.getData(), huminityString);
+            lcd_clrscr();
+            lcd_puts(sensorLabel);
+            lcd_putc(receiver.getIdentifier());
+            lcd_gotoxy(0, 1);
+            lcd_puts(huminityLabel);
+            lcd_puts(huminityString);
+            receiver.resetData();
         }
     }
 }

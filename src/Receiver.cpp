@@ -1,5 +1,4 @@
 #include "Receiver.h"
-#include "Debug.h"
 
 Receiver::Receiver()
 {
@@ -21,7 +20,7 @@ void Receiver::resetData()
 {
     dataAvailable = false;
 
-    for (int index = 0; index < FRAME_LENGTH; index++)
+    for (uint8_t index = 0; index < FRAME_LENGTH; index++)
     {
         data[index] = 0; // Ustaw każdy element tablicy na 0
     }
@@ -59,6 +58,7 @@ void Receiver::read()
 
     if (previousBit == 0 && currentBit == 1)
     {
+
         if (state == State::NONE)
         {
             resetData();
@@ -112,7 +112,7 @@ void Receiver::read()
     previousBit = currentBit;
 }
 
-uint8_t Receiver::getIdentifier()
+char Receiver::getIdentifier()
 {
     return data[1];
 }

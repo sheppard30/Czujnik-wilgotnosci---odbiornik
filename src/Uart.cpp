@@ -5,14 +5,14 @@ Uart::Uart() {}
 void Uart::init(unsigned int ubrr)
 {
     // Ustawienie baud rate
-    UBRRH = (unsigned char)(ubrr >> 8);
-    UBRRL = (unsigned char)ubrr;
+    UBRR0H = (unsigned char)(ubrr >> 8);
+    UBRR0L = (unsigned char)ubrr;
 
     // Włączenie transmisji (TX) i odbioru (RX)
-    UCSRB = (1 << TXEN) | (1 << RXEN);
+    UCSR0B = (1 << TXEN0) | (1 << RXEN0);
 
     // Ustawienie formatu ramki: 8-bit danych, 1 bit stopu
-    UCSRC = (1 << UCSZ1) | (1 << UCSZ0); // Brak bitu URSEL w ATtiny2313A
+    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00); // Konfiguracja ramki
 }
 
 void Uart::print(uint16_t value)
@@ -58,11 +58,11 @@ void Uart::print(const char *str)
 void Uart::print(uint8_t data)
 {
     // Czekaj aż bufor nadawczy będzie pusty
-    while (!(UCSRA & (1 << UDRE)))
+    while (!(UCSR0A & (1 << UDRE0)))
         ;
 
     // Wyślij dane
-    UDR = data;
+    UDR0 = data;
 }
 
 void Uart::print(const uint8_t *data, uint8_t length)

@@ -3,13 +3,12 @@
 
 #define DATA_DDR DDRD
 #define DATA_PORT PORTD
-#define DATA_PIN PD6
+#define DATA_PIN PD7
 
 #include <avr/io.h>
 
 #define PREAMBLE 0b10101010
 #define FRAME_LENGTH 4
-#define T 0.5
 
 class Receiver
 {
@@ -18,7 +17,7 @@ public:
     void init();
     void resetData();
     void onTimerInterrupt();
-    uint8_t getIdentifier();
+    char getIdentifier();
     uint16_t getData();
     bool isDataAvailable();
 
