@@ -3,11 +3,9 @@
 
 #include "Timer.h"
 #include "Receiver.h"
+#include "Lcd.h"
+#include "Uart.h"
 // #include "Debug.h"
-#include "StringUtils.h"
-
-#include <lcd.h>
-#include <lcd.c>
 
 Receiver receiver;
 
@@ -20,11 +18,9 @@ ISR(TIMER0_COMPA_vect)
 
 int main()
 {
-    // Uart::init(MYUBRR);
+    Uart::init(MYUBRR);
     Timer::init();
-
-    lcd_init(LCD_DISP_ON);
-    char huminityString[4];
+    Lcd lcd;
 
     while (1)
     {
@@ -33,13 +29,13 @@ int main()
             char sensorLabel[] = "Czujnik: ";
             char huminityLabel[] = "Wilgotnosc: ";
 
-            intToString(receiver.getData(), huminityString);
-            lcd_clrscr();
-            lcd_puts(sensorLabel);
-            lcd_putc(receiver.getIdentifier());
-            lcd_gotoxy(0, 1);
-            lcd_puts(huminityLabel);
-            lcd_puts(huminityString);
+            lcd.reset();
+            lcd.print(sensorLabel);
+            lcd.print(receiver.getIdentifier());
+            lcd.goToRow(1);
+            lcd.print(huminityLabel);
+            lcd.print(receiver.getData());
+
             receiver.resetData();
         }
     }
