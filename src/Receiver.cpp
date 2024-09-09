@@ -56,16 +56,16 @@ void Receiver::read()
 {
     uint8_t currentBit = (PIND & (1 << DATA_PIN)) ? 1 : 0;
 
+    // TODO: przeniesc
+    if (state == State::NONE)
+    {
+        resetData();
+        state = State::READING_PREAMBLE;
+        t = 0;
+    }
+
     if (previousBit == 0 && currentBit == 1)
     {
-
-        if (state == State::NONE)
-        {
-            resetData();
-            state = State::READING_PREAMBLE;
-            t = 0;
-        }
-
         if (t >= 10 || t == 0)
         {
             if (state == State::READING_PREAMBLE)

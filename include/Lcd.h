@@ -10,6 +10,7 @@ public:
     Lcd();
     void print(char c);
     void print(char *str);
+    void print(uint8_t number);
     void print(uint16_t number);
     void goToRow(uint8_t row);
     void reset();

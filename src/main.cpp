@@ -1,40 +1,48 @@
 #include <util/delay.h>
-#include <avr/pgmspace.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
 
 #include "Timer.h"
 #include "Receiver.h"
-#include "Lcd.h"
 #include "Uart.h"
+#include "Sensors.h"
+#include "Button.h"
 // #include "Debug.h"
 
 Receiver receiver;
-
-#include <avr/interrupt.h>
+Sensors sensors;
+Button button;
 
 ISR(TIMER0_COMPA_vect)
 {
     receiver.onTimerInterrupt();
 }
 
+ISR(INT0_vect)
+{
+    button.onInterrupt();
+}
+
+void switchSensor()
+{
+    sensors.switchSensor();
+}
+
 int main()
 {
     Uart::init(MYUBRR);
     Timer::init();
-    Lcd lcd;
+
+    button.onPress(switchSensor);
 
     while (1)
     {
         if (receiver.isDataAvailable())
         {
-            char sensorLabel[] = "Czujnik: ";
-            char huminityLabel[] = "Wilgotnosc: ";
+            char id = receiver.getIdentifier();
+            uint8_t huminity = (receiver.getData() / MAX_HUMINITY) * 100;
 
-            lcd.reset();
-            lcd.print(sensorLabel);
-            lcd.print(receiver.getIdentifier());
-            lcd.goToRow(1);
-            lcd.print(huminityLabel);
-            lcd.print(receiver.getData());
+            sensors.addOrUpdateSensor(id, huminity);
 
             receiver.resetData();
         }
