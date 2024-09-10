@@ -24,20 +24,24 @@ public:
 private:
     enum State
     {
-        NONE,
         READING_PREAMBLE,
         READING_DATA
     };
 
     volatile uint8_t previousBit;
     volatile uint8_t bitIndex;
-    volatile uint8_t t;
+    volatile uint8_t preambleBit;
+    volatile uint8_t count;
     volatile uint8_t data[FRAME_LENGTH];
     volatile State state;
     volatile bool dataAvailable;
 
+    volatile uint8_t fallingEdge;
+    volatile uint8_t risingEdge;
+
     void read();
     void fillBuffer(uint8_t bit);
+    void validatePreamble();
 };
 
 #endif

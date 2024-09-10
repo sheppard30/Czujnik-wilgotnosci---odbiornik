@@ -1,12 +1,17 @@
 #include "Receiver.h"
+#include "Uart.h"
 
 Receiver::Receiver()
 {
-    previousBit = 0;
-    state = State::NONE;
-    bitIndex = 0;
-    t = 0;
-    dataAvailable = false;
+    previousBit = 0;                 // Poprzedni bit
+    preambleBit = 1;                 // Aktualny bit preambuly
+    state = State::READING_PREAMBLE; // Aktualny stan
+    bitIndex = 0;                    // Liczba zapisanych bitow i aktualny bit
+    count = 0;                       // Liczba tikow
+    dataAvailable = false;           // Czy dane sa dostepne do pobrania
+
+    risingEdge = 0;
+    fallingEdge = 0;
 
     resetData();
 }
@@ -47,8 +52,18 @@ void Receiver::fillBuffer(uint8_t bit)
     if (bitIndex >= (FRAME_LENGTH - 1) * 8)
     {
         bitIndex = 0; // Zresetuj bitIndex, jeśli osiągnie koniec bufora
-        state = State::NONE;
+        state = State::READING_PREAMBLE;
+        count = 0;
         dataAvailable = true;
+    }
+}
+
+void Receiver::validatePreamble()
+{
+    if (data[0] == PREAMBLE)
+    {
+        state = State::READING_DATA;
+        data[0] = 0;
     }
 }
 
@@ -56,57 +71,54 @@ void Receiver::read()
 {
     uint8_t currentBit = (PIND & (1 << DATA_PIN)) ? 1 : 0;
 
-    // TODO: przeniesc
-    if (state == State::NONE)
-    {
-        resetData();
-        state = State::READING_PREAMBLE;
-        t = 0;
-    }
-
     if (previousBit == 0 && currentBit == 1)
     {
-        if (t >= 10 || t == 0)
+        Uart::print(fallingEdge);
+        if ((fallingEdge >= 10))
         {
+            Uart::print('1');
             if (state == State::READING_PREAMBLE)
             {
                 data[0] = (data[0] << 1) | 1;
+
+                validatePreamble();
             }
             else if (state == State::READING_DATA)
             {
                 fillBuffer(1);
             }
-            t = 0;
         }
+
+        fallingEdge = 0;
     }
     else if (previousBit == 1 && currentBit == 0)
     {
-        if (t >= 10)
+        Uart::print(risingEdge);
+        if (risingEdge >= 10 && risingEdge <= 12)
         {
+            Uart::print('0');
             if (state == State::READING_PREAMBLE)
             {
                 data[0] = (data[0] << 1);
+                Uart::print('V');
+                validatePreamble();
             }
             else if (state == State::READING_DATA)
             {
                 fillBuffer(0);
             }
-            t = 0;
         }
+
+        risingEdge = 0;
     }
 
-    if (state == State::READING_PREAMBLE)
+    if (currentBit)
     {
-        t++;
-
-        if (data[0] == PREAMBLE)
-        {
-            state = State::READING_DATA;
-        }
+        risingEdge++;
     }
-    else if (state == State::READING_DATA)
+    else
     {
-        t++;
+        fallingEdge++;
     }
 
     previousBit = currentBit;
